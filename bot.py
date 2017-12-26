@@ -75,10 +75,6 @@ async def on_message(message):
     if not message.content.startswith("mb!") and type(message.channel) == discord.DMChannel and message.author.id != bot.user.id:
         await message.channel.send('same')
         return
-
-    #react nekro with gey
-    if message.author.id == 168770585306857472 and random.randint(1,13) == 1:
-        await message.add_reaction(bot.get_emoji(287402139217559552))
         
     #mb!dhlcra only on dhl server
     if message.channel.id == 332292433750786058 and not message.content.startswith("mb!dhlcra"):
