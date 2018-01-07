@@ -31,7 +31,6 @@ with open('bot_config.json') as file:
     prefix = jsonf['prefix']
     token = jsonf['token']
     
-
 bot = commands.Bot(command_prefix=prefix, description=desc, owner_id=int(ownerid), pm_help=None)
 
 #useless variables
@@ -75,6 +74,10 @@ async def on_message(message):
     if not message.content.startswith("mb!") and type(message.channel) == discord.DMChannel and message.author.id != bot.user.id:
         await message.channel.send('same')
         return
+
+    #react nekro with gey
+    if message.author.id == 168770585306857472 and random.randint(1,13) == 1:
+        await message.add_reaction(bot.get_emoji(287402139217559552))
         
     #mb!dhlcra only on dhl server
     if message.channel.id == 332292433750786058 and not message.content.startswith("mb!dhlcra"):
@@ -83,6 +86,9 @@ async def on_message(message):
     #disable bio command unless on dm
     if not type(message.channel) == discord.DMChannel and message.author.id == 323487397344051202:
         return
+
+    if message.author.id == 395998040013537305:
+        await message.add_reaction("\N{NAUSEATED FACE}")
 
     #uses
     if message.content.startswith("mb!"):
@@ -244,6 +250,23 @@ async def deletemsg(ctx,mid):
 @commands.is_owner()
 async def burn(ctx):
     await bot.change_presence(game=discord.Game(name="the world burn",type=3))
+
+@bot.command(hidden=True)
+@commands.is_owner()
+async def reactmsg(ctx,msgid,emoji):
+    emo = re.findall(r"<:.+:([0-9]+)>",emoji)
+    msgtor = await ctx.get_message(int(msgid))
+    if emo != []:
+        await msgtor.add_reaction(bot.get_emoji(int(emo[0])))
+    else:
+        await msgtor.add_reaction(emoji)
+    await ctx.message.delete()
+
+@bot.command(hidden=True)
+@commands.is_owner()
+async def nickname(ctx,*,nickname):
+    me = ctx.guild.me
+    await me.edit(nick=nickname)
 
 #--every1 commands
 @bot.command()
@@ -419,7 +442,7 @@ async def dab(ctx):
 @bot.command()
 async def dhlcra(ctx):
     """sees dhlcra status"""
-    dhlcra = MinecraftServer("dhlserverip", 25565)
+    dhlcra = MinecraftServer("dhlcraip", 25565)
     try:
         dhls = dhlcra.status()
     except:
@@ -443,6 +466,16 @@ async def dhlcra(ctx):
     embed.add_field(name="World seed", value="-1265880969697154662", inline=True)
     await ctx.send(embed=embed)
 
+@bot.command(hidden=True)
+async def dhlcraup(ctx):
+    dhlcra = MinecraftServer("dhlcraip", 25565)
+    try:
+        dhls = dhlcra.status()
+    except:
+        await ctx.send("No")
+        return
+    await ctx.send("Yes")
+
 @bot.command()
 async def createdat(ctx):
     """Says when you created your discord account"""
@@ -456,6 +489,7 @@ async def strike(ctx,*,person):
     reason = random.choice(reasons)
     f = "Striked {} for: {}.".format(person,reason)
     await ctx.send(f)
+
 
 
 
