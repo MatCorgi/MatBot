@@ -46,57 +46,28 @@ class ImageStuff:
             await ctx.send(file=discord.File(img, 'tenprint.png'))
 
     @staticmethod
-    def dhl_textpil(ttext,btext) -> io.BytesIO:
-        white = (255,255,255)
-        imgm = Image.open('stuff/dhl.png').convert('RGBA')
-        txtsize = 100
-        fnt = ImageFont.truetype('stuff/maybe.otf', txtsize)
-        d = ImageDraw.Draw(imgm)
-        center = lambda x: (1024 - d.textsize(x, fnt)[0]) / 2
-        if center(ttext) > 10:
-            d.text((center(ttext),100), ttext, font=fnt, fill=white)
-        else:
-            while center(ttext) < 10:
-                txtsize -= 20
-                fnt = ImageFont.truetype('stuff/maybe.otf', txtsize)
-                center = lambda x: (1024 - d.textsize(x, fnt)[0]) / 2
-            d.text((center(ttext),100), ttext, font=fnt, fill=white)
-        txtsize = 100
-        fnt = ImageFont.truetype('stuff/maybe.otf', txtsize)
-        if center(btext) > 10:
-            d.text((center(btext),869), btext, font=fnt, fill=white)
-        else:
-            while center(btext) < 10:
-                txtsize -= 20
-                fnt = ImageFont.truetype('stuff/maybe.otf', txtsize)
-                center = lambda x: (1024 - d.textsize(x, fnt)[0]) / 2
-            d.text((center(btext),869), btext, font=fnt, fill=white) 
-        imgobject = io.BytesIO()
-        imgm.save(imgobject,format='PNG')
-        imgobject.seek(0)
-        return imgobject
-
-    @commands.command()
-    async def dhl_text(self, ctx, ttext, btext):
-        """dhlgay lol
-        Usage: mb!dhl_text "top text" "bottom text"
-        Example: mb!dhl_text "your" "mom"
-        mb!dhl_text no "space bar"
-        """
-        async with ctx.typing():
-            p = partial(self.dhl_textpil,ttext,btext)
-            img = await self.bot.loop.run_in_executor(None, p)
-            
-            await ctx.send(file=discord.File(img, 'dhl_gay.png'))
-
-    @staticmethod
     def nicehackspil(avatar,name,color,msg) -> io.BytesIO:
         l = Image.new('RGB', (219,64), (54,57,62))
-        av = Image.open(io.BytesIO(avatar))
-        av = av.resize((36,36),resample=Image.BILINEAR)
-        m = Image.new("L", av.size, 0)
-        ImageDraw.Draw(m).ellipse((0,0)+av.size,fill=155)
-        av.putalpha(m)
+        
+        im = Image.open(io.BytesIO(avatar))
+        im = im.convert("RGBA")
+        im = im.resize((36,36), Image.ANTIALIAS)
+        avav = Image.new("RGBA",im.size,"#36393e")
+        avav.paste(im,(0,0),mask=im.getchannel("A"))
+        bigsize = (im.size[0] * 3, im.size[1] * 3)
+        mask = Image.new('L', bigsize, 0)
+        draw = ImageDraw.Draw(mask)
+        draw.ellipse((0, 0) + bigsize, fill=255)
+        mask = mask.resize(im.size,Image.ANTIALIAS)
+        avav.putalpha(mask)
+        bg = Image.new("RGBA",im.size,"#36393e")
+        bg.paste(avav,(0,0),mask=avav.getchannel("A"))
+        del avav
+        del mask
+        del draw
+        del im
+
+        
         d = ImageDraw.Draw(l)
         txtf = ImageFont.truetype("stuff/Whitney-Book.otf", 15)
         namef = ImageFont.truetype("stuff/Whitney-Book.otf", 16)
@@ -104,7 +75,7 @@ class ImageStuff:
 
         widttht = d.textsize(msg,txtf)[0]+68+5
         space = d.textsize(name,namef)[0]+68+4
-        today = d.textsize("Today at 6:30 PM",timef)[0]+space+5
+        today = d.textsize("Today at 6:30 PM",timef)[0]+space+8
         if today > widttht:
             l = l.resize((today,64))
         else:
@@ -113,20 +84,39 @@ class ImageStuff:
         d.text((68,34), msg, font=txtf, fill="#ffffff")
         d.text((68,10), name, font=namef, fill=color)
         d.text((space,16), "Today at 6:30 PM", font=timef, fill="#50555B")
-        l.paste(av, (14,13),mask=m)
+        
+        l.paste(bg, (14,13))
+        
         tmp = io.BytesIO()
         l.save(tmp,format='PNG')
         tmp.seek(0)
         return tmp
 
     @commands.command()
-    async def nicehacks(self,ctx,msg,uid=None):
+    async def nicehacks(self,ctx,*,msg):
         async with ctx.typing():
-            if uid != None:
-                m = ctx.message.guild.get_member(int(uid)) or self.bot.get_user(int(uid))
+            if msg.find(" ") != -1:
+                uid = msg.split(" ")[0]
+            else:
+                uid = None
+                
+            try:
+                uid = int(uid)
+                msg = msg[msg.find(" ")+1:]
+            except (ValueError,TypeError):
+                uid = None
+                pass
+
+            if uid:
+                if ctx.guild: m = ctx.guild.get_member(uid)
+                else: m = bot.get_user(uid)
             else:
                 m = ctx.author
 
+            if not m:
+                await ctx.send("Invalid id.")
+                return
+            
             av = await self.get_avatar(m)
 
             if isinstance(m, discord.Member):
@@ -140,6 +130,48 @@ class ImageStuff:
             p = partial(self.nicehackspil,av,m.display_name,c,msg)
             img = await self.bot.loop.run_in_executor(None, p)
             await ctx.send(file=discord.File(img, 'notme.png'))
+
+    @staticmethod
+    def cvoltonpil(image) -> io.BytesIO:
+        cvolton = Image.open("stuff/cvolton.png")
+        cvolton = cvolton.convert("RGBA")
+        bg = Image.open(image)
+        bg = bg.convert("RGBA")
+        bg = bg.resize(cvolton.size, Image.ANTIALIAS)
+        bg.paste(cvolton,(0,0),mask=cvolton.getchannel("A"))
+        
+        tmp = io.BytesIO()
+        bg.save(tmp,format='PNG')
+        tmp.seek(0)
+        return tmp
+
+    @commands.command()
+    async def cvolton(self,ctx):
+        try:
+            att = ctx.message.attachments
+            img = att[0]
+        except Exception:
+            await ctx.send("No attachments found.")
+            return
+        
+        supportedformats = (".png",".jpg",".jpeg",".gif")
+        download = False
+        for i in supportedformats:
+            if img.filename.endswith(i):
+                download = True
+                break
+        if not download:
+            return
+        image = io.BytesIO()
+        await img.save(image)
+        p = partial(self.cvoltonpil,image)
+        img = await self.bot.loop.run_in_executor(None, p)
+        await ctx.send(file=discord.File(img, 'cvolton.png'))
+        
+
+        
+
+    
             
 def setup(bot):
     bot.add_cog(ImageStuff(bot))
